@@ -2,6 +2,14 @@ buildscript {
 	repositories {
 		//jcenter()
 		maven {
+			name "Sonatype Snapshots"
+			url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+		}
+		maven {
+			name "Quilt Repository"
+			url 'https://maven.quiltmc.org/repository/release'
+		}
+		maven {
 			name "Modmuss50 Repository"
 			url 'https://maven.modmuss50.me'
 		}
@@ -15,10 +23,10 @@ buildscript {
 		classpath "org.apache.commons:commons-compress:1.19"
 		classpath "com.google.guava:guava:28.0-jre"
 		classpath 'de.undercouch:gradle-download-task:3.4.3'
-		classpath "cuchaz:enigma-cli:0.27.1"
+		classpath "org.quiltmc:enigma-cli:2.2.1"
 		classpath 'net.fabricmc:tiny-remapper:0.1.0.40' //Newer versions will need createMappingsProvider updating
 		classpath 'com.github.Chocohead:Stitch:8befa96d4b'
-		classpath 'com.github.Chocohead:tiny-mappings-parser:337c8b6'
+		classpath 'org.quiltmc:tiny-mappings-parser:0.3.0'
 	}
 }
 
@@ -39,6 +47,14 @@ def plasmaVersion = "${minecraft_version}-build.$build_number"
 repositories {
 	mavenCentral()
 	maven {
+		name "Sonatype Snapshots"
+		url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+	}
+	maven {
+		name "Quilt Repository"
+		url 'https://maven.quiltmc.org/repository/release'
+	}
+	maven {
 		name "Modmuss50 Repository"
 		url 'https://maven.modmuss50.me'
 	}
@@ -46,6 +62,7 @@ repositories {
 		name "Jitpack"
 		url 'https://jitpack.io/'
 	}
+	
 }
 
 configurations {
@@ -58,7 +75,7 @@ configurations {
 }
 
 dependencies {
-	enigmaRuntime "cuchaz:enigma-swing:0.27.1"
+	enigmaRuntime "org.quiltmc:enigma-swing:2.2.1"
 	enigmaRuntime 'com.github.Chocohead:Stitch:8befa96d4b'
 }
 
@@ -85,12 +102,12 @@ import org.apache.commons.io.FileUtils
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 
-import cuchaz.enigma.command.CheckMappingsCommand
-import cuchaz.enigma.command.ConvertMappingsCommand
-import cuchaz.enigma.command.MapSpecializedMethodsCommand
+import org.quiltmc.enigma.command.CheckMappingsCommand
+import org.quiltmc.enigma.command.ConvertMappingsCommand
+import org.quiltmc.enigma.command.MapSpecializedMethodsCommand
 
-import net.fabricmc.stitch.commands.CommandCorrectMappingUnions
 import net.fabricmc.stitch.commands.CommandFixNesting
+import net.fabricmc.stitch.commands.CommandCorrectMappingUnions
 import net.fabricmc.stitch.commands.CommandMergeTiny
 import net.fabricmc.stitch.commands.CommandRewriteIntermediary
 import net.fabricmc.stitch.merge.JarMerger
@@ -199,26 +216,9 @@ task downloadMcJars(dependsOn: downloadWantedVersionManifest) {
 			FileUtils.copyURLToFile(new URL(version.downloads.client.url), clientJar)
 		}
 
-//		if (!serverJar.exists() || !validateChecksum(serverJar, version.downloads.server.sha1)) {
-//			logger.lifecycle(":downloading minecraft 1server")
-//			FileUtils.copyURLToFile(new URL(version.downloads.server.url), serverJar)
-//		}
 		if (!serverJar.exists() || !validateChecksum(serverJar, "2f90dc1cb5ca7e9d71786801b307390a67fcf954")) {
 			logger.lifecycle(":downloading minecraft server")
-			URL url = new URL("https://cdn.discordapp.com/attachments/369990015096455168/500081541196546049/b1.7.3.zip");
-
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestProperty("User-Agent", "Mozilla/5.0"); //Discord wants some kind of user agent before it lets you download things
-
-			new ZipArchiveInputStream(connection.getInputStream()).with {stream ->
-				ZipArchiveEntry entry;
-				while ((entry = stream.getNextZipEntry()) != null) {
-					if ("b1.7.3/minecraft_server.jar".equals(entry.getName())) {
-						FileUtils.copyToFile(stream, serverJar);
-						break;
-					}
-				}
-			}
+			FileUtils.copyURLToFile(new URL("https://vault.omniarchive.uk/archive/java/server-beta/b1.7/b1.7.3.jar"), serverJar)
 		}
 	}
 }
@@ -314,7 +314,7 @@ task plasma(dependsOn: setupPlasma) {
 	doLast {
 		ant.setLifecycleLogLevel "WARN"
 		ant.java(
-			classname: 'cuchaz.enigma.gui.Main',
+			classname: 'org.quiltmc.enigma.gui.Main',
 			classpath: configurations.enigmaRuntime.asPath,
 			fork: true,
 			spawn: true
